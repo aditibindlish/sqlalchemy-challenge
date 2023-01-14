@@ -36,7 +36,7 @@ def welcome():
         f"/api/v1.0/station<br/>"
         f"/api/v1.0/tobs<br/>"
         f"/api/v1.0/start<br/>"
-        f"/api/v1.0/start/end"  
+        f"/api/v1.0/end"  
     )
 
 
@@ -140,7 +140,7 @@ def tobs():
 @app.route("/api/v1.0/start/<start_date>")
 def start(start_date):
     session = Session(engine)
-    date_test = session.query(Measurement.date).filter(Measurement.date == start).distinct().all()
+    # date_test = session.query(Measurement.date).filter(Measurement.date == start_date).distinct().all()
  
     # create a list of values to extract
     sel=[
@@ -151,12 +151,33 @@ def start(start_date):
 
 
     # query for dates after start date provided
-    temperature = session.query(*sel).filter(Measurement.date>=start).all()
+    temperature = session.query(*sel).filter(Measurement.date>=start_date).all()
     result = list(np.ravel(temperature))
 
     try:
         return jsonify(result)
-    except: jsonify({"error": f" Date {start} not found"}),404    
+    except: jsonify({"error": f" Date {start_date} not found"}),404    
+
+@app.route("/api/v1.0/end/<start_date><end_date>")
+def end(start_date,end_date):
+    session = Session(engine)
+   
+    # create a list of values to extract
+    sel=[
+        func.min(Measurement.tobs),
+        func.max(Measurement.tobs),
+        func.avg(Measurement.tobs)
+    ]
+
+
+    # query for dates after start date and before end date provided
+    temperature1= session.query(*sel).filter(Measurement.date>=start_date).filter(Measurement.date<=end_date).all()
+    result1 = list(np.ravel(temperature1))
+
+    try:
+        return jsonify(result1)
+    except: jsonify({"error": f" Date {start_date} or {end_date} not found"}),404
+
 
 if __name__ == '__main__':
     app.run(debug=True)
